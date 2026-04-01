@@ -8,10 +8,14 @@ const memoryStorage = require('../storage/memoryStorage');
 
 const fs = require('fs');
 
-// Ensure uploads folder exists locally but skip on Vercel
+// Ensure uploads folder exists locally but skip on Vercel if read-only
 const uploadDir = 'uploads/';
-if (!process.env.VERCEL && !fs.existsSync(uploadDir)){
-    fs.mkdirSync(uploadDir, { recursive: true });
+try {
+    if (!fs.existsSync(uploadDir)){
+        fs.mkdirSync(uploadDir, { recursive: true });
+    }
+} catch (e) {
+    console.log("Skipping upload folder creation, likely on Vercel read-only filesystem");
 }
 
 let storage = multer.diskStorage({
