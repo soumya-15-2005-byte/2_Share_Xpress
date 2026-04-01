@@ -8,9 +8,9 @@ const memoryStorage = require('../storage/memoryStorage');
 
 const fs = require('fs');
 
-// Ensure uploads folder exists locally
+// Ensure uploads folder exists locally but skip on Vercel
 const uploadDir = 'uploads/';
-if (!fs.existsSync(uploadDir)){
+if (!process.env.VERCEL && !fs.existsSync(uploadDir)){
     fs.mkdirSync(uploadDir, { recursive: true });
 }
 
