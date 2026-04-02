@@ -62,11 +62,25 @@ router.post('/', (req, res) => {
       // Try to save to MongoDB if connected, otherwise use memory storage
       if (mongoose.connection.readyState === 1) {
         try {
+          // Save physical file directly into MongoDB GridFS
+          const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, { bucketName: 'uploads' });
+          const uploadStream = bucket.openUploadStream(req.file.filename);
+          const readStream = fs.createReadStream(req.file.path);
+          readStream.pipe(uploadStream);
+          
+          await new Promise((resolve, reject) => {
+            uploadStream.on('finish', resolve);
+            uploadStream.on('error', reject);
+          });
+
+          // Attempt to remove original temp file
+          try { fs.unlinkSync(req.file.path); } catch(e) {}
+
           const file = new File(fileData);
           const response = await file.save();
           return res.json({ file: `${baseUrl}/files/${response.uuid}` });
         } catch (error) {
-          console.error('Error saving to MongoDB, using memory storage:', error.message);
+          console.error('Error saving to MongoDB GridFS, using memory storage:', error.message);
           // Fall through to memory storage
         }
       } else {
