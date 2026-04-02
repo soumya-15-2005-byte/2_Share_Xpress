@@ -53,14 +53,11 @@ router.post('/', (req, res) => {
         size: req.file.size
       };
       
-      // Auto-detect base URL from request if not set in env
-      let baseUrl = process.env.APP_BASE_URL;
-      if (!baseUrl) {
-        const protocol = req.protocol || 'http';
-        const host = req.get('host') || 'localhost:3000';
-        baseUrl = `${protocol}://${host}`;
-        console.log(`🌐 Auto-detected base URL: ${baseUrl}`);
-      }
+      // Always use the actual request host to prevent broken links from misconfigured env vars
+      const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+      const host = req.get('host') || 'localhost:3000';
+      const baseUrl = `${protocol}://${host}`;
+      console.log(`🌐 Dynamically generated base URL: ${baseUrl}`);
       
       // Try to save to MongoDB if connected, otherwise use memory storage
       if (mongoose.connection.readyState === 1) {
@@ -107,14 +104,10 @@ router.post('/send', async (req, res) => {
     // send mail
     const sendMail = require('../services/mailService');
     
-    // Auto-detect base URL for email links
-    let emailBaseUrl = process.env.APP_BASE_URL;
-    if (!emailBaseUrl) {
-      // Use request to get base URL (fallback)
-      const protocol = req.protocol || 'https';
-      const host = req.get('host') || 'localhost:3000';
-      emailBaseUrl = `${protocol}://${host}`;
-    }
+    // Always use the actual request host to prevent broken email links
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+    const host = req.get('host') || 'localhost:3000';
+    const emailBaseUrl = `${protocol}://${host}`;
     
     sendMail({
       from: emailFrom,

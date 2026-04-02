@@ -42,13 +42,10 @@ router.get('/:uuid', async (req, res) => {
             return res.render('download', { error: 'Link has expired or file not found. Files on free hosting may be deleted after server restart.'});
         } 
         
-        // Auto-detect base URL from request if not set in env
-        let baseUrl = process.env.APP_BASE_URL;
-        if (!baseUrl) {
-          const protocol = req.protocol || 'http';
-          const host = req.get('host') || 'localhost:3000';
-          baseUrl = `${protocol}://${host}`;
-        }
+        // Always use the actual request host to prevent broken links
+        const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http';
+        const host = req.get('host') || 'localhost:3000';
+        const baseUrl = `${protocol}://${host}`;
         return res.render('download', { 
             uuid: file.uuid, 
             fileName: file.filename, 
